@@ -53,8 +53,10 @@ jobs:
           echo GITHUB_REF=$GITHUB_REF
           echo BEFORE=$BEFORE
           echo AFTER=$AFTER
+          echo ACTION=$ACTION
         env:
           BASE_BRANCH: ${{ github.base_ref }}
           BEFORE: ${{ github.event.payload.before }}
           AFTER: ${{ github.event.payload.after }}
+          ACTION: ${{ github.event.payload.action }}
 
