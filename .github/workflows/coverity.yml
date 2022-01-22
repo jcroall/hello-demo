@@ -1,0 +1,55 @@
+name: Coverity
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    #runs-on: [self-hosted]
+    runs-on: ubuntu-latest
+
+    env:
+      # The following variables must be configured in your GitHub project or
+      # organization settings:
+      #   COVERITY_URL: URL to Coverity Connect
+      #   COVERITY_USER: Username to authenticate to Coverity Connect
+      #   COVERITY_LICENSE: The text contents of your license.dat that will be
+      #     passed to the Coverity analysis software.
+      COVERITY_URL: ${{ secrets.COVERITY_URL }}
+      COV_USER: ${{ secrets.COVERITY_USER }}
+      COVERITY_PASSPHRASE: ${{ secrets.COVERITY_PASSPHRASE }}
+      COVERITY_LICENSE: ${{ secrets.COVERITY_LICENSE }}
+      # Some Coverity command line utilities are not found in the bin
+      # directory. Configure the COVERITY_HOME here:
+      # Note: currently set to JBC VM
+      COVERITY_HOME: /home/runner/cov-analysis-linux64
+      # The SECURITY_GATE_VIEW must be configured in Coverity Connect
+      # to include the filter criteria for failing a build.
+      SECURITY_GATE_VIEW: OWASP Web Top 10
+      # The COVERITY_CHECKERS specifies what analysis options are passed
+      # to the Coverity analysis software.
+      COVERITY_CHECKERS: --webapp-security
+      # The SYNOPSYS_GITHUB_TOOLS_REPO specifies the repository from which
+      # to download the supportive Python scripts for this configuration.
+      SYNOPSYS_GITHUB_TOOLS_REPO: https://github.com/synopsys-sig-community/synopsys-github-tools
+
+    steps:
+      # First check out the code. Note this is a shallow checkout, for the
+      # version of code being built.
+      - uses: actions/checkout@v2
+
+      - name: Coverity Scan
+        run: |
+          echo GITHUB_API_URL=$GITHUB_URL
+          echo GITHUB_REPOSITORY=$GITHUB_REPOSITORY
+          echo GITHUB_SHA=$GITHUB_SHA
+          echo GITHUB_HEAD_REF=$GITHUB_HEAD_REF
+          echo GITHUB_BASE_REF=$GITHUB_BASE_REF
+          echo GITHUB_REF=$GITHUB_REF
+        env:
+          BASE_BRANCH: ${{ github.base_ref }}
