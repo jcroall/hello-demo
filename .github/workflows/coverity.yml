@@ -51,5 +51,10 @@ jobs:
           echo GITHUB_HEAD_REF=$GITHUB_HEAD_REF
           echo GITHUB_BASE_REF=$GITHUB_BASE_REF
           echo GITHUB_REF=$GITHUB_REF
+          echo BEFORE=$BEFORE
+          echo AFTER=$AFTER
         env:
           BASE_BRANCH: ${{ github.base_ref }}
+          BEFORE: ${{ github.context.payload.before }}
+          AFTER: ${{ github.context.payload.after }}
+
