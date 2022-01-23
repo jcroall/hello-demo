@@ -58,6 +58,8 @@ jobs:
               --state io_state.json \
               Scm.Repository.Name=$GITHUB_REPOSITORY \
               Project.Branch.Name=$GITHUB_REF_NAMES
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # XXX Note the optional build stage. If a build command is provided, the idea
       # is that the adapter will automatically prefer build capture over auto
@@ -84,6 +86,8 @@ jobs:
           Scm.Repository.Name=$GITHUB_REPOSITORY \
           Project.Branch.Name=$GITHUB_REF_NAME \
           Resources.Coverity.SecurityGateView="$SECURITY_GATE_VIEW"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/upload-artifact@v2
         with:
