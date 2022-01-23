@@ -10,8 +10,8 @@ on:
 
 jobs:
   build:
-    #runs-on: [self-hosted]
-    runs-on: ubuntu-latest
+    # Use self-hosted runner with full Coverity kit installed
+    runs-on: [self-hosted]
 
     env:
       # The following variables must be configured in your GitHub project or
@@ -34,29 +34,55 @@ jobs:
       # The COVERITY_CHECKERS specifies what analysis options are passed
       # to the Coverity analysis software.
       COVERITY_CHECKERS: --webapp-security
-      # The SYNOPSYS_GITHUB_TOOLS_REPO specifies the repository from which
-      # to download the supportive Python scripts for this configuration.
-      SYNOPSYS_GITHUB_TOOLS_REPO: https://github.com/synopsys-sig-community/synopsys-github-tools
 
     steps:
       # First check out the code. Note this is a shallow checkout, for the
       # version of code being built.
       - uses: actions/checkout@v2
 
-      - name: Coverity Scan
-        run: |
-          echo GITHUB_API_URL=$GITHUB_URL
-          echo GITHUB_REPOSITORY=$GITHUB_REPOSITORY
-          echo GITHUB_SHA=$GITHUB_SHA
-          echo GITHUB_HEAD_REF=$GITHUB_HEAD_REF
-          echo GITHUB_BASE_REF=$GITHUB_BASE_REF
-          echo GITHUB_REF=$GITHUB_REF
-          echo BEFORE=$BEFORE
-          echo AFTER=$AFTER
-          echo ACTION=$ACTION
-        env:
-          BASE_BRANCH: ${{ github.base_ref }}
-          BEFORE: ${{ github.event.payload.before }}
-          AFTER: ${{ github.event.payload.after }}
-          ACTION: ${{ github.event.payload.action }}
+      - name: Fetch IO Client Adapters
+        run: git clone -q --depth 1 https://github.com/jcroall/io-client-adapters
 
+      - name: Initialize IO
+        run: /home/runner/io --adapters coverity-auto-capture.json
+
+      # XXX Note that Scm.Repository.Name and Project.Branch.Name should in theory
+      # be populated by a built-in IO Client adapter, but not sure how that works
+      # yet. In other words, this syntax will get simpler.
+      - name: Pre-scan Stage
+        run: |
+          /home/runner/io --stage pre-scan \
+              --state io_state.json \
+              Scm.Repository.Name=$GITHUB_REPOSITORY \
+              Project.Branch.Name=$GITHUB_REF_NAMES
+
+      # XXX Note the optional build stage. If a build command is provided, the idea
+      # is that the adapter will automatically prefer build capture over auto
+      # capture (which is the default)
+      #- name: Build Stage
+      #  run: |
+      #    /home/runner/io --stage build \
+      #    --state io_state.json \
+      #    Resources.Coverity.BuildCommand="mvn clean && mvn package" \
+      #    Scm.Repository.Name=$GITHUB_REPOSITORY \
+      #    Project.Branch.Name=$GITHUB_REF_NAME
+
+      - name: Execution Stage
+        run: |
+          /home/runner/io --stage execution \
+              --state io_state.json \
+              Scm.Repository.Name=$GITHUB_REPOSITORY \
+              Project.Branch.Name=$GITHUB_REF_NAME
+
+      - name: Workflow Stage
+        run: |
+          /home/runner/io --stage workflow \
+          --state io_state.json \
+          Scm.Repository.Name=$GITHUB_REPOSITORY \
+          Project.Branch.Name=$GITHUB_REF_NAME \
+          Resources.Coverity.SecurityGateView="$SECURITY_GATE_VIEW"
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: io-log.txt
+          path: ./io-log.txt
