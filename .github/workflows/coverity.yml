@@ -41,7 +41,10 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Fetch IO Client Adapters
-        run: git clone -q --depth 1 https://github.com/jcroall/io-client-adapters
+        run: |
+          git clone -q --depth 1 https://github.com/jcroall/io-client-adapters
+          # XXX Copy to current working directory for convenience
+          cp -r ./io-client-adapters/* .
 
       - name: Initialize IO
         run: /home/runner/io --adapters coverity-auto-capture.json
